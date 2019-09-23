@@ -4,11 +4,11 @@ const devicePixelRatio = () => {
   return window.devicePixelRatio || 1.0
 }
 
-export const render = (canvas, object) => {
+export const init = (canvas) => {
   const { width, height } = canvas
 
   const gl = canvas.getContext('webgl2')
-  gl.clearColor(0.0, 0.0, 0.0, 0.0)
+  gl.clearColor(0.0, 0.0, 0.0, 1.0)
   gl.blendFuncSeparate(
     gl.SRC_ALPHA,
     gl.ONE_MINUS_SRC_ALPHA,
@@ -28,7 +28,11 @@ export const render = (canvas, object) => {
 
   const mvMatrix = identity()
   const pMatrix = orthogonalMatrix(left, right, top, bottom, near, far)
+  return { mvMatrix, pMatrix }
+}
 
+export const render = (canvas, object, { mvMatrix, pMatrix }) => {
+  const gl = canvas.getContext('webgl2')
   gl.clear(gl.COLOR_BUFFER_BIT)
 
   gl.useProgram(object.program)
@@ -40,8 +44,10 @@ export const render = (canvas, object) => {
 
   gl.bindVertexArray(object.geometry)
   for (const { offset, color } of object.items) {
-    gl.uniform4fv(colorLocation, color)
-    gl.drawElements(object.mode, 4, gl.UNSIGNED_SHORT, offset)
+    if (colorLocation) {
+      gl.uniform4fv(colorLocation, color)
+    }
+    gl.drawElements(object.mode, object.count, gl.UNSIGNED_SHORT, offset)
   }
   gl.bindVertexArray(null)
 }
